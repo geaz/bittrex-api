@@ -1,23 +1,8 @@
-sudo: false
 language: rust
-addons:
-  apt:
-    packages:
-      - libcurl4-openssl-dev
-      - libelf-dev
-      - libdw-dev
-      - binutils-dev
 rust:
-  - nightly
-  - beta
   - stable
-before_script:
-  - |
-      pip install 'travis-cargo<0.2' --user &&
-      export PATH=$HOME/.local/bin:$PATH
+  - beta
+  - nightly
 script:
-  - |
-      travis-cargo build &&
-      travis-cargo test
-after_success:
-  - travis-cargo coveralls --no-sudo --verify
+  - cargo build --verbose --all
+  - cargo test --verbose --all
