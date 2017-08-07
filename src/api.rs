@@ -1,19 +1,22 @@
+#[cfg(test)]
+use mockito;
+
 use time;
 use std::str;
-
 use hmac::{Hmac, Mac, MacResult};
 use sha2::Sha512;
 use generic_array::typenum::U64;
-
+use serde;
 use reqwest::{Client, Proxy};
 use reqwest::header::Headers;
 
-use serde;
+use error::{ BittrexError, BittrexErrorType };
+use values::*;
 
-use bittrex_error::{ BittrexError, BittrexErrorType };
-use bittrex_values::*;
-
+#[cfg(not(test))]
 const API_URL: &str = "https://bittrex.com/api/v1.1";
+#[cfg(test)]
+const API_URL: &str = mockito::SERVER_URL;
 
 pub struct BittrexAPI<'a> {
     api_key: &'a str,
@@ -32,7 +35,17 @@ impl<'a> BittrexAPI<'a> {
     }
 
     /// Returns all available market data
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let markets = bittrex_api.get_markets().unwrap();
+    /// ```
     pub fn get_markets(&self) -> Result<Vec<BittrexMarket>, BittrexError> {
+        println!("{}", API_URL);
         let markets = self.call_public_api::<BittrexAPIResult<BittrexMarket>>(&format!("{}/public/getmarkets", API_URL))?;
         self.check_return_vec_response(markets)
     }
@@ -213,17 +226,46 @@ impl<'a> BittrexAPI<'a> {
 
 #[cfg(test)]
 mod tests {
+    use mockito::mock;
     use super::BittrexAPI;
-    
+
     #[test]
-    fn it_works() {
-        let bittrex_api = BittrexAPI::new("", "");
-        let currencies = bittrex_api.get_currencies().unwrap();
+    fn should_get_markets_successfully() {
+        // Arrange
+        let _mock = mock("GET", "/public/getmarkets")
+            .with_status(200)
+            .with_body(r#"{
+                "success" : true,
+                "message" : "",
+                "result" : [{
+                        "MarketCurrency" : "LTC",
+                        "BaseCurrency" : "BTC",
+                        "MarketCurrencyLong" : "Litecoin",
+                        "BaseCurrencyLong" : "Bitcoin",
+                        "MinTradeSize" : 0.01000000,
+                        "MarketName" : "BTC-LTC",
+                        "IsActive" : true,
+                        "Created" : "2014-02-13T00:00:00"
+                    }, {
+                        "MarketCurrency" : "DOGE",
+                        "BaseCurrency" : "BTC",
+                        "MarketCurrencyLong" : "Dogecoin",
+                        "BaseCurrencyLong" : "Bitcoin",
+                        "MinTradeSize" : 100.00000000,
+                        "MarketName" : "BTC-DOGE",
+                        "IsActive" : true,
+                        "Created" : "2014-02-13T00:00:00"
+                    }
+                ]
+            }"#)
+            .create();
+        let bittrex_api = BittrexAPI::new("KEY", "SECRET");
 
-        println!("{}", currencies[0]);
-
+        // Act
         let markets = bittrex_api.get_markets().unwrap();
 
-        println!("{}", markets[0]);
+        // Assert
+        assert_eq!(markets.len(), 2);
+        assert_eq!(markets[0].market_currency, "LTC");
     }
 }

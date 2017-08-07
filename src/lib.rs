@@ -1,3 +1,6 @@
+#[cfg(test)]
+extern crate mockito;
+
 extern crate time;
 extern crate hmac;
 extern crate sha2;
@@ -10,6 +13,6 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 
-pub mod bittrex_error;
-pub mod bittrex_values;
-pub mod bittrex_api;
+pub mod error;
+pub mod values;
+pub mod api;
