@@ -1,5 +1,4 @@
 use time;
-use std;
 use std::str;
 
 use hmac::{Hmac, Mac, MacResult};
@@ -10,7 +9,6 @@ use reqwest::{Client, Proxy};
 use reqwest::header::Headers;
 
 use serde;
-use serde_json;
 
 use bittrex_error::{ BittrexError, BittrexErrorType };
 use bittrex_values::*;
@@ -36,13 +34,13 @@ impl<'a> BittrexAPI<'a> {
     /// Returns all available market data
     pub fn get_markets(&self) -> Result<Vec<BittrexMarket>, BittrexError> {
         let markets = self.call_public_api::<BittrexAPIResult<BittrexMarket>>(&format!("{}/public/getmarkets", API_URL))?;
-        self.check_return_array_response(markets)
+        self.check_return_vec_response(markets)
     }
 
     /// Returns all available currencies
     pub fn get_currencies(&self) -> Result<Vec<BittrexCurrency>, BittrexError> {
         let currencies = self.call_public_api::<BittrexAPIResult<BittrexCurrency>>(&format!("{}/public/getcurrencies", API_URL))?;
-        self.check_return_array_response(currencies)
+        self.check_return_vec_response(currencies)
     }
 
     pub fn get_ticker(&self, market: &str) -> Result<BittrexTicker, BittrexError> {
@@ -52,7 +50,7 @@ impl<'a> BittrexAPI<'a> {
 
     pub fn get_market_summaries(&self) -> Result<Vec<BittrexMarketSummary>, BittrexError> {
         let summaries = self.call_public_api::<BittrexAPIResult<BittrexMarketSummary>>(&format!("{}/public/getmarketsummaries", API_URL))?;
-        self.check_return_array_response(summaries)
+        self.check_return_vec_response(summaries)
     }
 
     pub fn get_market_summary(&self, market: &str) -> Result<BittrexMarketSummary, BittrexError> {
@@ -65,58 +63,86 @@ impl<'a> BittrexAPI<'a> {
         self.check_return_single_response(order_book)
     }
 
-    /*pub fn get_market_history(&self, market: &str) -> String {
-        self.call_public_api(&format!("{}/public/getmarkethistory?market={}", API_URL, market))
+    pub fn get_market_history(&self, market: &str) -> Result<BittrexTrade, BittrexError> {
+        let market_history = self.call_public_api::<BittrexAPIResult<BittrexTrade>>(&format!("{}/public/getmarkethistory?market={}", API_URL, market))?;
+        self.check_return_single_response(market_history)
     }
 
-    pub fn get_open_orders(&self, market: &str) -> String {
-        self.call_private_api(&format!("{}/market/getopenorders?market={}", API_URL, market))
+    pub fn get_open_orders(&self) -> Result<Vec<BittrexOpenOrder>, BittrexError> {
+        let open_orders = self.call_private_api::<BittrexAPIResult<BittrexOpenOrder>>(&format!("{}/market/getopenorders", API_URL))?;
+        self.check_return_vec_response(open_orders)
     }
 
-    pub fn get_order(&self, order_id: &str) -> String {
-        self.call_private_api(&format!("{}/account/getorder?uuid={}", API_URL, order_id))
+    pub fn get_open_orders_by_market(&self, market: &str) -> Result<Vec<BittrexOpenOrder>, BittrexError> {
+        let open_orders = self.call_private_api::<BittrexAPIResult<BittrexOpenOrder>>(&format!("{}/market/getopenorders?market={}", API_URL, market))?;
+        self.check_return_vec_response(open_orders)
     }
 
-    pub fn get_order_history(&self) -> String {
-        self.call_private_api(&format!("{}/account/getorderhistory?", API_URL))
+    pub fn get_order(&self, order_id: &str) -> Result<BittrexOrder, BittrexError> {
+        let order = self.call_private_api::<BittrexAPIResult<BittrexOrder>>(&format!("{}/account/getorder?uuid={}", API_URL, order_id))?;
+        self.check_return_single_response(order)
     }
 
-    pub fn get_withdrawal_history(&self, currency: &str) -> String {
-        self.call_private_api(&format!("{}/account/getwithdrawalhistory?currency={}", API_URL, currency))
+    pub fn get_order_history(&self) -> Result<Vec<BittrexHistoryOrder>, BittrexError> {
+        let order_history = self.call_private_api::<BittrexAPIResult<BittrexHistoryOrder>>(&format!("{}/account/getorderhistory?", API_URL))?;
+        self.check_return_vec_response(order_history)
     }
 
-    pub fn get_deposit_history(&self, currency: &str) -> String {
-        self.call_private_api(&format!("{}/account/getdeposithistory?currency={}", API_URL, currency))
+    pub fn get_withdrawal_history(&self) -> Result<Vec<BittrexTransaction>, BittrexError> {
+        let withdrawal_history = self.call_private_api::<BittrexAPIResult<BittrexTransaction>>(&format!("{}/account/getwithdrawalhistory", API_URL))?;
+        self.check_return_vec_response(withdrawal_history)
     }
 
-    pub fn get_balances(&self) -> String {
-        self.call_private_api(&format!("{}/account/getbalances?", API_URL))
+    pub fn get_withdrawal_history_by_currency(&self, currency: &str) -> Result<Vec<BittrexTransaction>, BittrexError> {
+        let withdrawal_history = self.call_private_api::<BittrexAPIResult<BittrexTransaction>>(&format!("{}/account/getwithdrawalhistory?currency={}", API_URL, currency))?;
+        self.check_return_vec_response(withdrawal_history)
     }
 
-    pub fn get_balance(&self, currency: &str) -> String {
-        self.call_private_api(&format!("{}/account/getbalance?currency={}", API_URL, currency))
+    pub fn get_deposit_history(&self, currency: &str) -> Result<BittrexTransaction, BittrexError> {
+        let deposit = self.call_private_api::<BittrexAPIResult<BittrexTransaction>>(&format!("{}/account/getdeposithistory?currency={}", API_URL, currency))?;
+        self.check_return_single_response(deposit)
     }
 
-    pub fn get_deposit_address(&self, currency: &str) -> String {
-        self.call_private_api(&format!("{}/account/getdepositaddress?currency={}", API_URL, currency))
+    pub fn get_deposit_history_by_currency(&self, currency: &str) -> Result<Vec<BittrexTransaction>, BittrexError> {
+        let deposit_history = self.call_private_api::<BittrexAPIResult<BittrexTransaction>>(&format!("{}/account/getdeposithistory?currency={}", API_URL, currency))?;
+        self.check_return_vec_response(deposit_history)
     }
 
-    pub fn withdraw(&self, currency: &str, quantity: f64, address: &str, payment_id: &str) {
-        self.call_private_api(&format!("{}/account/withdraw?currency={}&quantity={}&address={}&paymentid={}", API_URL, currency, quantity, address, payment_id));
+    pub fn get_balances(&self) -> Result<Vec<BittrexBalance>, BittrexError> {
+        let balances = self.call_private_api::<BittrexAPIResult<BittrexBalance>>(&format!("{}/account/getbalances?", API_URL))?;
+        self.check_return_vec_response(balances)
     }
 
-    pub fn buy_limit(&self, market: &str, quantity: f64, rate: f64) {
-        self.call_private_api(&format!("{}/market/buylimit?market={}&quantity={}&rate={}", API_URL, market, quantity, rate));
+    pub fn get_balance(&self, currency: &str) -> Result<BittrexBalance, BittrexError> {
+        let balance = self.call_private_api::<BittrexAPIResult<BittrexBalance>>(&format!("{}/account/getbalance?currency={}", API_URL, currency))?;
+        self.check_return_single_response(balance)
     }
 
-    pub fn sell_limit(&self, market: &str, quantity: f64, rate: f64) {
-        self.call_private_api(&format!("{}/market/selllimit?market={}&quantity={}&rate={}", API_URL, market, quantity, rate));
+    pub fn get_deposit_address(&self, currency: &str) -> Result<BittrexAddress, BittrexError> {
+        let deposit_address = self.call_private_api::<BittrexAPIResult<BittrexAddress>>(&format!("{}/account/getdepositaddress?currency={}", API_URL, currency))?;
+        self.check_return_single_response(deposit_address)
     }
 
-    pub fn cancel_order(&self, order_id: &str) {
-        self.call_private_api(&format!("{}/market/cancel?uuid={}", API_URL, order_id));
+    pub fn withdraw(&self, currency: &str, quantity: f64, address: &str, payment_id: &str) -> Result<BittrexUuid, BittrexError> {
+        let withdraw = self.call_private_api::<BittrexAPIResult<BittrexUuid>>(&format!("{}/account/withdraw?currency={}&quantity={}&address={}&paymentid={}", API_URL, currency, quantity, address, payment_id))?;
+        self.check_return_single_response(withdraw)
     }
-*/
+
+    pub fn buy_limit(&self, market: &str, quantity: f64, rate: f64) -> Result<BittrexUuid, BittrexError> {
+        let buy_limit = self.call_private_api::<BittrexAPIResult<BittrexUuid>>(&format!("{}/market/buylimit?market={}&quantity={}&rate={}", API_URL, market, quantity, rate))?;
+        self.check_return_single_response(buy_limit)
+    }
+
+    pub fn sell_limit(&self, market: &str, quantity: f64, rate: f64) -> Result<BittrexUuid, BittrexError> {
+        let sell_limit = self.call_private_api::<BittrexAPIResult<BittrexUuid>>(&format!("{}/market/selllimit?market={}&quantity={}&rate={}", API_URL, market, quantity, rate))?;
+        self.check_return_single_response(sell_limit)
+    }
+
+    pub fn cancel_order(&self, order_id: &str) -> Result<(), BittrexError> {
+        self.call_private_api::<BittrexAPIResult<()>>(&format!("{}/market/cancel?uuid={}", API_URL, order_id))?;
+        Ok(())
+    }
+
     fn call_public_api<T>(&self, url: &str) -> Result<T, BittrexError> where for<'de> T: serde::Deserialize<'de> {
         let client = self.get_client()?;
         let mut resp = client.get(url)?.send()?;
@@ -159,7 +185,7 @@ impl<'a> BittrexAPI<'a> {
         Ok(client_builder.build()?)
     }
 
-    fn check_return_array_response<T>(&self, bittrex_api_result: BittrexAPIResult<T>) -> Result<Vec<T>, BittrexError> {
+    fn check_return_vec_response<T>(&self, bittrex_api_result: BittrexAPIResult<T>) -> Result<Vec<T>, BittrexError> {
         match bittrex_api_result.success {
             true => Ok(bittrex_api_result.result),
             false => Err(BittrexError { error_type: BittrexErrorType::APIError, message: bittrex_api_result.message })

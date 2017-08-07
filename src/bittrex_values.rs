@@ -8,6 +8,20 @@ pub struct BittrexAPIResult<T> {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct BittrexUuid {
+    #[serde(rename="Uuid")]
+    pub uuid: String
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct BittrexAddress {
+    #[serde(rename="Currency")]
+    pub currency: String,
+    #[serde(rename="Address")]
+    pub address: String,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct BittrexCurrency {
     #[serde(rename="Currency")]
     pub currency: String,
@@ -119,6 +133,182 @@ pub struct BittrexTrade {
     pub order_type: String
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct BittrexOpenOrder {
+    #[serde(rename="Uuid")]
+    pub uuid: Option<String>,
+    #[serde(rename="OrderUuid")]
+    pub order_uuid: String,
+    #[serde(rename="Exchange")]
+    pub exchange: String,
+    #[serde(rename="OrderType")]
+    pub order_type: String,
+    #[serde(rename="Quantity")]
+    pub quantity: f32,
+    #[serde(rename="QuantityRemaining")]
+    pub quantity_remaining: f32,
+    #[serde(rename="Limit")]
+    pub limit: f32,
+    #[serde(rename="CommissionPaid")]
+    pub comission_paid: f32,
+    #[serde(rename="Price")]
+    pub price: f32,
+    #[serde(rename="PricePerUnit")]
+    pub price_per_unit: Option<f32>,
+    #[serde(rename="Opened")]
+    pub opened: String,
+    #[serde(rename="Closed")]
+    pub closed: Option<String>,
+    #[serde(rename="CancelInitiated")]
+    pub cancel_initiated: bool,
+    #[serde(rename="ImmediateOrCancel")]
+    pub immediate_or_cancel: bool,
+    #[serde(rename="IsConditional")]
+    pub is_conditional: bool,
+    #[serde(rename="Condition")]
+    pub condition: Option<String>,
+    #[serde(rename="ConditionalTarget")]
+    pub conditional_target: Option<String>
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct BittrexHistoryOrder {
+    #[serde(rename="OrderUuid")]
+    pub order_uuid: String,
+    #[serde(rename="Exchange")]
+    pub exchange: String,
+    #[serde(rename="TimeStamp")]
+    pub time_stamp: String,
+    #[serde(rename="OrderType")]
+    pub order_type: String,
+    #[serde(rename="Quantity")]
+    pub quantity: f32,
+    #[serde(rename="QuantityRemaining")]
+    pub quantity_remaining: f32,
+    #[serde(rename="Limit")]
+    pub limit: f32,
+    #[serde(rename="Commission")]
+    pub comission: f32,
+    #[serde(rename="Price")]
+    pub price: f32,
+    #[serde(rename="PricePerUnit")]
+    pub price_per_unit: Option<f32>,
+    #[serde(rename="ImmediateOrCancel")]
+    pub immediate_or_cancel: bool,
+    #[serde(rename="IsConditional")]
+    pub is_conditional: bool,
+    #[serde(rename="Condition")]
+    pub condition: Option<String>,
+    #[serde(rename="ConditionalTarget")]
+    pub conditional_target: Option<String>
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct BittrexOrder {
+    #[serde(rename="AccountId")]
+    pub account_id: Option<String>,
+    #[serde(rename="OrderUuid")]
+    pub order_uuid: String,
+    #[serde(rename="Exchange")]
+    pub exchange: String,
+    #[serde(rename="Type")]
+    pub order_type: String,
+    #[serde(rename="Quantity")]
+    pub quantity: f32,
+    #[serde(rename="QuantityRemaining")]
+    pub quantity_remaining: f32,
+    #[serde(rename="Limit")]
+    pub limit: f32,
+    #[serde(rename="Reserved")]
+    pub reserved: f32,
+    #[serde(rename="ReserveRemaining")]
+    pub reserve_remaining: f32,
+    #[serde(rename="CommissionReserved")]
+    pub commission_reserved: f32,
+    #[serde(rename="CommissionReserveRemaining")]
+    pub commission_reserve_remaining: f32,
+    #[serde(rename="CommissionPaid")]
+    pub comission_paid: f32,
+    #[serde(rename="Price")]
+    pub price: f32,
+    #[serde(rename="PricePerUnit")]
+    pub price_per_unit: Option<f32>,
+    #[serde(rename="Opened")]
+    pub opened: String,
+    #[serde(rename="Closed")]
+    pub closed: Option<String>,
+    #[serde(rename="IsOpen")]
+    pub is_open: bool,
+    #[serde(rename="Sentinel")]
+    pub sentinel: String,
+    #[serde(rename="CancelInitiated")]
+    pub cancel_initiated: bool,
+    #[serde(rename="ImmediateOrCancel")]
+    pub immediate_or_cancel: bool,
+    #[serde(rename="IsConditional")]
+    pub is_conditional: bool,
+    #[serde(rename="Condition")]
+    pub condition: Option<String>,
+    #[serde(rename="ConditionalTarget")]
+    pub conditional_target: Option<String>
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct BittrexTransaction {
+    #[serde(rename="PaymentUuid")]
+    pub payment_uuid: String,
+    #[serde(rename="Currency")]
+    pub currency: String,
+    #[serde(rename="Amount")]
+    pub amount: f32,
+    #[serde(rename="Address")]
+    pub address: String,
+    #[serde(rename="Opened")]
+    pub opened: String,
+    #[serde(rename="Authorized")]
+    pub authorized: bool,
+    #[serde(rename="pending_payment")]
+    pub pending_payment: bool,
+    #[serde(rename="TxCost")]
+    pub tx_cost: f32,
+    #[serde(rename="TxId")]
+    pub tx_id: Option<String>,
+    #[serde(rename="Canceled")]
+    pub canceled: bool,
+    #[serde(rename="InvalidAddress")]
+    pub invalid_address: bool
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct BittrexBalance {
+    #[serde(rename="Currency")]
+    pub currency: String,
+    #[serde(rename="Balance")]
+    pub balance: f32,
+    #[serde(rename="Available")]
+    pub available: f32,
+    #[serde(rename="Pending")]
+    pub pending: f32,
+    #[serde(rename="CryptoAddress")]
+    pub crypto_address: String,
+    #[serde(rename="Requested")]
+    pub requested: bool,
+    #[serde(rename="Uuid")]
+    pub uuid: Option<String>
+}
+
+impl fmt::Display for BittrexUuid {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.uuid)
+    }
+}
+
+impl fmt::Display for BittrexAddress {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Currency: {} (Address: {})", self.currency, self.address)
+    }
+}
+
 impl fmt::Display for BittrexCurrency {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} (Min. Confirmations: {}, Tx Fee: {})", self.currency, self.min_confirmation, self.tx_fee)
@@ -158,5 +348,35 @@ impl fmt::Display for BittrexPublicOrder {
 impl fmt::Display for BittrexTrade {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "ID: {} (Quantity: {}, Price: {}, Total: {})", self.id, self.quantity, self.price, self.total)
+    }
+}
+
+impl fmt::Display for BittrexOpenOrder {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Uuid: {} (Exchange: {}, Order Type: {}, Quantity: {}, Limit: {})", self.order_uuid, self.exchange, self.order_type, self.quantity, self.limit)
+    }
+}
+
+impl fmt::Display for BittrexHistoryOrder {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Uuid: {} (Exchange: {}, Type: {}, Quantity: {}, Limit: {})", self.order_uuid, self.exchange, self.order_type, self.quantity, self.limit)
+    }
+}
+
+impl fmt::Display for BittrexOrder {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Uuid: {} (Exchange: {}, Type: {}, Quantity: {}, Limit: {}, Is Open: {})", self.order_uuid, self.exchange, self.order_type, self.quantity, self.limit, self.is_open)
+    }
+}
+
+impl fmt::Display for BittrexTransaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Uuid: {} (Currency: {}, Ammount: {}, Address: {}, Pending: {})", self.payment_uuid, self.currency, self.amount, self.address, self.pending_payment)
+    }
+}
+
+impl fmt::Display for BittrexBalance {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Currency: {} (Balance: {}, Available: {}, Pending: {})", self.currency, self.balance, self.available, self.pending)
     }
 }
