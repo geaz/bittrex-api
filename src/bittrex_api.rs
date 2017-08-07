@@ -12,7 +12,7 @@ use reqwest::header::Headers;
 use serde;
 use serde_json;
 
-use bittrex_error::BittrexError;
+use bittrex_error::{ BittrexError, BittrexErrorType };
 use bittrex_values::*;
 
 const API_URL: &str = "https://bittrex.com/api/v1.1";
@@ -35,40 +35,34 @@ impl<'a> BittrexAPI<'a> {
 
     /// Returns all available market data
     pub fn get_markets(&self) -> Result<Vec<BittrexMarket>, BittrexError> {
-        Ok(self.call_public_api::<BittrexAPIResult<BittrexMarket>>(&format!("{}/public/getmarkets", API_URL))?.result)
+        let markets = self.call_public_api::<BittrexAPIResult<BittrexMarket>>(&format!("{}/public/getmarkets", API_URL))?;
+        self.check_return_array_response(markets)
     }
 
     /// Returns all available currencies
     pub fn get_currencies(&self) -> Result<Vec<BittrexCurrency>, BittrexError> {
-        Ok(self.call_public_api::<BittrexAPIResult<BittrexCurrency>>(&format!("{}/public/getcurrencies", API_URL))?.result)
+        let currencies = self.call_public_api::<BittrexAPIResult<BittrexCurrency>>(&format!("{}/public/getcurrencies", API_URL))?;
+        self.check_return_array_response(currencies)
     }
 
     pub fn get_ticker(&self, market: &str) -> Result<BittrexTicker, BittrexError> {
-        let mut ticker = self.call_public_api::<BittrexAPIResult<BittrexTicker>>(&format!("{}/public/getticker?market={}", API_URL, market))?;
-        match ticker.result.len() {
-            1 => Ok(ticker.result.remove(0)),
-            _ => Err(BittrexError::MarketNotFound)
-        }        
+        let ticker = self.call_public_api::<BittrexAPIResult<BittrexTicker>>(&format!("{}/public/getticker?market={}", API_URL, market))?;
+        self.check_return_single_response(ticker)        
     }
 
     pub fn get_market_summaries(&self) -> Result<Vec<BittrexMarketSummary>, BittrexError> {
-        Ok(self.call_public_api::<BittrexAPIResult<BittrexMarketSummary>>(&format!("{}/public/getmarketsummaries", API_URL))?.result)
+        let summaries = self.call_public_api::<BittrexAPIResult<BittrexMarketSummary>>(&format!("{}/public/getmarketsummaries", API_URL))?;
+        self.check_return_array_response(summaries)
     }
 
     pub fn get_market_summary(&self, market: &str) -> Result<BittrexMarketSummary, BittrexError> {
-        let mut summary = self.call_public_api::<BittrexAPIResult<BittrexMarketSummary>>(&format!("{}/public/getticker?getmarketsummary?market={}", API_URL, market))?;
-        match summary.result.len() {
-            1 => Ok(summary.result.remove(0)),
-            _ => Err(BittrexError::MarketNotFound)
-        }
+        let summary = self.call_public_api::<BittrexAPIResult<BittrexMarketSummary>>(&format!("{}/public/getticker?getmarketsummary?market={}", API_URL, market))?;
+        self.check_return_single_response(summary)
     }
 
     pub fn get_order_book(&self, market: &str, book_type: &str) -> Result<BittrexPublicOrderBook, BittrexError> {
-        let mut order_book = self.call_public_api::<BittrexAPIResult<BittrexPublicOrderBook>>(&format!("{}/public/getticker?getorderbook=?market={}&type={}", API_URL, market, book_type))?;
-        match order_book.result.len() {
-            1 => Ok(order_book.result.remove(0)),
-            _ => Err(BittrexError::MarketNotFound)
-        }
+        let order_book = self.call_public_api::<BittrexAPIResult<BittrexPublicOrderBook>>(&format!("{}/public/getticker?getorderbook=?market={}&type={}", API_URL, market, book_type))?;
+        self.check_return_single_response(order_book)
     }
 
     /*pub fn get_market_history(&self, market: &str) -> String {
@@ -163,6 +157,24 @@ impl<'a> BittrexAPI<'a> {
         }
         
         Ok(client_builder.build()?)
+    }
+
+    fn check_return_array_response<T>(&self, bittrex_api_result: BittrexAPIResult<T>) -> Result<Vec<T>, BittrexError> {
+        match bittrex_api_result.success {
+            true => Ok(bittrex_api_result.result),
+            false => Err(BittrexError { error_type: BittrexErrorType::APIError, message: bittrex_api_result.message })
+        }
+    }
+
+    fn check_return_single_response<T>(&self, mut bittrex_api_result: BittrexAPIResult<T>) -> Result<T, BittrexError> {
+        match bittrex_api_result.success {
+            true => match bittrex_api_result.result.len() {
+                1 => Ok(bittrex_api_result.result.remove(0)),
+                0 => Err(BittrexError { error_type: BittrexErrorType::NoResults, message: "Maybe check your parameters?".to_string() }),
+                _ => Err(BittrexError { error_type: BittrexErrorType::APIError, message: "Multiple results found! Maybe check your parameters?".to_string() })
+            },
+            false => Err(BittrexError { error_type: BittrexErrorType::APIError, message: bittrex_api_result.message })
+        }
     }
 
     fn to_hex_string(&self, bytes: &[u8]) -> String {
