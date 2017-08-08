@@ -1,6 +1,3 @@
-#[cfg(test)]
-use mockito;
-
 use time;
 use std::str;
 use hmac::{Hmac, Mac, MacResult};
@@ -13,25 +10,37 @@ use reqwest::header::Headers;
 use error::{ BittrexError, BittrexErrorType };
 use values::*;
 
-#[cfg(not(test))]
-const API_URL: &str = "https://bittrex.com/api/v1.1";
-#[cfg(test)]
-const API_URL: &str = mockito::SERVER_URL;
-
 pub struct BittrexAPI<'a> {
+    api_url: &'a str,
     api_key: &'a str,
     api_secret: &'a str,
     http_proxy: Option<&'a str>,
     https_proxy: Option<&'a str>
 }
 
+impl<'a> Default for BittrexAPI<'a> {
+    fn default() -> BittrexAPI<'a> {
+        BittrexAPI {
+            api_url: "https://bittrex.com/api/v1.1",
+            api_key: "",
+            api_secret: "",
+            http_proxy: None,
+            https_proxy: None
+        }
+    }
+}
+
 impl<'a> BittrexAPI<'a> {
     pub fn new(api_key: &'a str, api_secret: &'a str) -> Self {
-        BittrexAPI { api_key: api_key, api_secret: api_secret, http_proxy: None, https_proxy: None }
+        BittrexAPI { api_key: api_key, api_secret: api_secret, ..Default::default() }
+    }
+
+    pub fn new_override_api_url(api_key: &'a str, api_secret: &'a str, api_url: &'a str) -> Self {
+        BittrexAPI { api_url: api_url, api_key: api_key, api_secret: api_secret, ..Default::default() }
     }
 
     pub fn new_with_proxy(api_key: &'a str, api_secret: &'a str, http_proxy: Option<&'a str>, https_proxy: Option<&'a str>) -> Self {
-        BittrexAPI { api_key: api_key, api_secret: api_secret, http_proxy: http_proxy, https_proxy: https_proxy }
+        BittrexAPI { api_key: api_key, api_secret: api_secret, http_proxy: http_proxy, https_proxy: https_proxy, ..Default::default() }
     }
 
     /// Returns all available market data
@@ -45,114 +54,339 @@ impl<'a> BittrexAPI<'a> {
     /// let markets = bittrex_api.get_markets().unwrap();
     /// ```
     pub fn get_markets(&self) -> Result<Vec<BittrexMarket>, BittrexError> {
-        println!("{}", API_URL);
-        let markets = self.call_public_api::<BittrexAPIResult<BittrexMarket>>(&format!("{}/public/getmarkets", API_URL))?;
+        println!("{}", self.api_url);
+        let markets = self.call_public_api::<BittrexAPIVecResult<BittrexMarket>>(&format!("{}/public/getmarkets", self.api_url))?;
         self.check_return_vec_response(markets)
     }
 
     /// Returns all available currencies
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let currencies = bittrex_api.get_currencies().unwrap();
+    /// ```
     pub fn get_currencies(&self) -> Result<Vec<BittrexCurrency>, BittrexError> {
-        let currencies = self.call_public_api::<BittrexAPIResult<BittrexCurrency>>(&format!("{}/public/getcurrencies", API_URL))?;
+        let currencies = self.call_public_api::<BittrexAPIVecResult<BittrexCurrency>>(&format!("{}/public/getcurrencies", self.api_url))?;
         self.check_return_vec_response(currencies)
     }
 
+    /// Returns ticker by market name
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let ticker = bittrex_api.get_ticker("BTC-LTC").unwrap();
+    /// ```
     pub fn get_ticker(&self, market: &str) -> Result<BittrexTicker, BittrexError> {
-        let ticker = self.call_public_api::<BittrexAPIResult<BittrexTicker>>(&format!("{}/public/getticker?market={}", API_URL, market))?;
+        let ticker = self.call_public_api::<BittrexAPIResult<BittrexTicker>>(&format!("{}/public/getticker?market={}", self.api_url, market))?;
         self.check_return_single_response(ticker)        
     }
 
+    /// Returns all market summaries
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let summaries = bittrex_api.get_market_summaries().unwrap();
+    /// ```
     pub fn get_market_summaries(&self) -> Result<Vec<BittrexMarketSummary>, BittrexError> {
-        let summaries = self.call_public_api::<BittrexAPIResult<BittrexMarketSummary>>(&format!("{}/public/getmarketsummaries", API_URL))?;
+        let summaries = self.call_public_api::<BittrexAPIVecResult<BittrexMarketSummary>>(&format!("{}/public/getmarketsummaries", self.api_url))?;
         self.check_return_vec_response(summaries)
     }
 
+    /// Returns market summary by market name
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let summary = bittrex_api.get_market_summary("BTC-LTC").unwrap();
+    /// ```
     pub fn get_market_summary(&self, market: &str) -> Result<BittrexMarketSummary, BittrexError> {
-        let summary = self.call_public_api::<BittrexAPIResult<BittrexMarketSummary>>(&format!("{}/public/getticker?getmarketsummary?market={}", API_URL, market))?;
-        self.check_return_single_response(summary)
+        let summary = self.call_public_api::<BittrexAPIVecResult<BittrexMarketSummary>>(&format!("{}/public/getmarketsummary?market={}", self.api_url, market))?;
+        self.check_return_single_vec_response(summary)
     }
 
-    pub fn get_order_book(&self, market: &str, book_type: &str) -> Result<BittrexPublicOrderBook, BittrexError> {
-        let order_book = self.call_public_api::<BittrexAPIResult<BittrexPublicOrderBook>>(&format!("{}/public/getticker?getorderbook=?market={}&type={}", API_URL, market, book_type))?;
+    /// Returns the order book of the given market.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    /// use bittrex_api::values::BittrexOrderType;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let order_book = bittrex_api.get_order_book("BTC-LTC", BittrexOrderType::Both).unwrap();
+    /// ```
+    pub fn get_order_book(&self, market: &str, book_type: BittrexOrderType) -> Result<BittrexPublicOrderBook, BittrexError> {
+        let order_book = self.call_public_api::<BittrexAPIResult<BittrexPublicOrderBook>>(&format!("{}/public/getorderbook?market={}&type={}", self.api_url, market, book_type))?;
         self.check_return_single_response(order_book)
     }
 
-    pub fn get_market_history(&self, market: &str) -> Result<BittrexTrade, BittrexError> {
-        let market_history = self.call_public_api::<BittrexAPIResult<BittrexTrade>>(&format!("{}/public/getmarkethistory?market={}", API_URL, market))?;
-        self.check_return_single_response(market_history)
+    /// Returns the market history of the given market.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let market_history = bittrex_api.get_market_history("BTC-LTC").unwrap();
+    /// ```
+    pub fn get_market_history(&self, market: &str) -> Result<Vec<BittrexTrade>, BittrexError> {
+        let market_history = self.call_public_api::<BittrexAPIVecResult<BittrexTrade>>(&format!("{}/public/getmarkethistory?market={}", self.api_url, market))?;
+        self.check_return_vec_response(market_history)
     }
 
+    /// Returns the open orders of the user given by the api_key and api_secret.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let open_orders = bittrex_api.get_open_orders().unwrap();
+    /// ```
     pub fn get_open_orders(&self) -> Result<Vec<BittrexOpenOrder>, BittrexError> {
-        let open_orders = self.call_private_api::<BittrexAPIResult<BittrexOpenOrder>>(&format!("{}/market/getopenorders", API_URL))?;
+        let open_orders = self.call_private_api::<BittrexAPIVecResult<BittrexOpenOrder>>(&format!("{}/market/getopenorders?", self.api_url))?;
         self.check_return_vec_response(open_orders)
     }
 
+    /// Returns the open orders of the given market and of the user given by the api_key and api_secret.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let open_orders = bittrex_api.get_open_orders_by_market("BTC-LTC").unwrap();
+    /// ```
     pub fn get_open_orders_by_market(&self, market: &str) -> Result<Vec<BittrexOpenOrder>, BittrexError> {
-        let open_orders = self.call_private_api::<BittrexAPIResult<BittrexOpenOrder>>(&format!("{}/market/getopenorders?market={}", API_URL, market))?;
+        let open_orders = self.call_private_api::<BittrexAPIVecResult<BittrexOpenOrder>>(&format!("{}/market/getopenorders?market={}", self.api_url, market))?;
         self.check_return_vec_response(open_orders)
     }
 
+    /// Returns the order given by the order_id.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let order = bittrex_api.get_order("ORDERID").unwrap();
+    /// ```
     pub fn get_order(&self, order_id: &str) -> Result<BittrexOrder, BittrexError> {
-        let order = self.call_private_api::<BittrexAPIResult<BittrexOrder>>(&format!("{}/account/getorder?uuid={}", API_URL, order_id))?;
+        let order = self.call_private_api::<BittrexAPIResult<BittrexOrder>>(&format!("{}/account/getorder?uuid={}", self.api_url, order_id))?;
         self.check_return_single_response(order)
     }
 
+    /// Returns the order history of the user given by the api_key and api_secret.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let order_history = bittrex_api.get_order_history().unwrap();
+    /// ```
     pub fn get_order_history(&self) -> Result<Vec<BittrexHistoryOrder>, BittrexError> {
-        let order_history = self.call_private_api::<BittrexAPIResult<BittrexHistoryOrder>>(&format!("{}/account/getorderhistory?", API_URL))?;
+        let order_history = self.call_private_api::<BittrexAPIVecResult<BittrexHistoryOrder>>(&format!("{}/account/getorderhistory?", self.api_url))?;
         self.check_return_vec_response(order_history)
     }
 
+    /// Returns the order history of the given market and of the user given by the api_key and api_secret.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let order_history = bittrex_api.get_order_history_by_market("BTC-LTC").unwrap();
+    /// ```
+    pub fn get_order_history_by_market(&self, market: &str) -> Result<Vec<BittrexHistoryOrder>, BittrexError> {
+        let order_history = self.call_private_api::<BittrexAPIVecResult<BittrexHistoryOrder>>(&format!("{}/account/getorderhistory?market={}", self.api_url, market))?;
+        self.check_return_vec_response(order_history)
+    }
+
+    /// Returns the withdrawal history of the user given by the api_key and api_secret.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let withdrawal_history = bittrex_api.get_withdrawal_history().unwrap();
+    /// ```
     pub fn get_withdrawal_history(&self) -> Result<Vec<BittrexTransaction>, BittrexError> {
-        let withdrawal_history = self.call_private_api::<BittrexAPIResult<BittrexTransaction>>(&format!("{}/account/getwithdrawalhistory", API_URL))?;
+        let withdrawal_history = self.call_private_api::<BittrexAPIVecResult<BittrexTransaction>>(&format!("{}/account/getwithdrawalhistory?", self.api_url))?;
         self.check_return_vec_response(withdrawal_history)
     }
 
+    /// Returns the withdrawal history of the given market and of the user given by the api_key and api_secret.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let withdrawal_history = bittrex_api.get_withdrawal_history_by_currency("BTC-LTC").unwrap();
+    /// ```
     pub fn get_withdrawal_history_by_currency(&self, currency: &str) -> Result<Vec<BittrexTransaction>, BittrexError> {
-        let withdrawal_history = self.call_private_api::<BittrexAPIResult<BittrexTransaction>>(&format!("{}/account/getwithdrawalhistory?currency={}", API_URL, currency))?;
+        let withdrawal_history = self.call_private_api::<BittrexAPIVecResult<BittrexTransaction>>(&format!("{}/account/getwithdrawalhistory?currency={}", self.api_url, currency))?;
         self.check_return_vec_response(withdrawal_history)
     }
 
-    pub fn get_deposit_history(&self, currency: &str) -> Result<BittrexTransaction, BittrexError> {
-        let deposit = self.call_private_api::<BittrexAPIResult<BittrexTransaction>>(&format!("{}/account/getdeposithistory?currency={}", API_URL, currency))?;
-        self.check_return_single_response(deposit)
-    }
-
-    pub fn get_deposit_history_by_currency(&self, currency: &str) -> Result<Vec<BittrexTransaction>, BittrexError> {
-        let deposit_history = self.call_private_api::<BittrexAPIResult<BittrexTransaction>>(&format!("{}/account/getdeposithistory?currency={}", API_URL, currency))?;
+    /// Returns the deposit history of the user given by the api_key and api_secret.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let deposit_history = bittrex_api.get_deposit_history().unwrap();
+    /// ```
+    pub fn get_deposit_history(&self) -> Result<Vec<BittrexTransaction>, BittrexError> {
+        let deposit_history = self.call_private_api::<BittrexAPIVecResult<BittrexTransaction>>(&format!("{}/account/getdeposithistory?", self.api_url))?;
         self.check_return_vec_response(deposit_history)
     }
 
+    /// Returns the deposit history of the given currency and of the user given by the api_key and api_secret.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let deposit_history = bittrex_api.get_deposit_history_by_currency("BTC").unwrap();
+    /// ```
+    pub fn get_deposit_history_by_currency(&self, currency: &str) -> Result<Vec<BittrexTransaction>, BittrexError> {
+        let deposit_history = self.call_private_api::<BittrexAPIVecResult<BittrexTransaction>>(&format!("{}/account/getdeposithistory?currency={}", self.api_url, currency))?;
+        self.check_return_vec_response(deposit_history)
+    }
+
+    /// Returns the balances of the user given by the api_key and api_secret.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let balances = bittrex_api.get_balances().unwrap();
+    /// ```
     pub fn get_balances(&self) -> Result<Vec<BittrexBalance>, BittrexError> {
-        let balances = self.call_private_api::<BittrexAPIResult<BittrexBalance>>(&format!("{}/account/getbalances?", API_URL))?;
+        let balances = self.call_private_api::<BittrexAPIVecResult<BittrexBalance>>(&format!("{}/account/getbalances?", self.api_url))?;
         self.check_return_vec_response(balances)
     }
 
+    /// Returns the balance of the given currency and of the user given by the api_key and api_secret.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let balance = bittrex_api.get_balance("BTC").unwrap();
+    /// ```
     pub fn get_balance(&self, currency: &str) -> Result<BittrexBalance, BittrexError> {
-        let balance = self.call_private_api::<BittrexAPIResult<BittrexBalance>>(&format!("{}/account/getbalance?currency={}", API_URL, currency))?;
+        let balance = self.call_private_api::<BittrexAPIResult<BittrexBalance>>(&format!("{}/account/getbalance?currency={}", self.api_url, currency))?;
         self.check_return_single_response(balance)
     }
 
+    /// Returns the deposit address of the given currency and of the user given by the api_key and api_secret.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let deposit_history = bittrex_api.get_deposit_address("BTC").unwrap();
+    /// ```
     pub fn get_deposit_address(&self, currency: &str) -> Result<BittrexAddress, BittrexError> {
-        let deposit_address = self.call_private_api::<BittrexAPIResult<BittrexAddress>>(&format!("{}/account/getdepositaddress?currency={}", API_URL, currency))?;
+        let deposit_address = self.call_private_api::<BittrexAPIResult<BittrexAddress>>(&format!("{}/account/getdepositaddress?currency={}", self.api_url, currency))?;
         self.check_return_single_response(deposit_address)
     }
 
+    /// Withdraws tokens of the user given by the api_key and api_secret.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let withdraw_uuid = bittrex_api.withdraw("BTC", 1.5, "BITCOINADDRESS", "").unwrap();
+    /// ```
     pub fn withdraw(&self, currency: &str, quantity: f64, address: &str, payment_id: &str) -> Result<BittrexUuid, BittrexError> {
-        let withdraw = self.call_private_api::<BittrexAPIResult<BittrexUuid>>(&format!("{}/account/withdraw?currency={}&quantity={}&address={}&paymentid={}", API_URL, currency, quantity, address, payment_id))?;
+        let withdraw = self.call_private_api::<BittrexAPIResult<BittrexUuid>>(&format!("{}/account/withdraw?currency={}&quantity={}&address={}&paymentid={}", self.api_url, currency, quantity, address, payment_id))?;
         self.check_return_single_response(withdraw)
     }
 
+    /// Places a buy order on the given market for the user given by the api_key and api_secret.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let buy_uuid = bittrex_api.buy_limit("BTC-LTC", 1.5, 0.00023).unwrap();
+    /// ```
     pub fn buy_limit(&self, market: &str, quantity: f64, rate: f64) -> Result<BittrexUuid, BittrexError> {
-        let buy_limit = self.call_private_api::<BittrexAPIResult<BittrexUuid>>(&format!("{}/market/buylimit?market={}&quantity={}&rate={}", API_URL, market, quantity, rate))?;
+        let buy_limit = self.call_private_api::<BittrexAPIResult<BittrexUuid>>(&format!("{}/market/buylimit?market={}&quantity={}&rate={}", self.api_url, market, quantity, rate))?;
         self.check_return_single_response(buy_limit)
     }
 
+    /// Places a sell order on the given market for the user given by the api_key and api_secret.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// let sell_uuid = bittrex_api.sell_limit("BTC-LTC", 1.5, 0.00023).unwrap();
+    /// ```
     pub fn sell_limit(&self, market: &str, quantity: f64, rate: f64) -> Result<BittrexUuid, BittrexError> {
-        let sell_limit = self.call_private_api::<BittrexAPIResult<BittrexUuid>>(&format!("{}/market/selllimit?market={}&quantity={}&rate={}", API_URL, market, quantity, rate))?;
+        let sell_limit = self.call_private_api::<BittrexAPIResult<BittrexUuid>>(&format!("{}/market/selllimit?market={}&quantity={}&rate={}", self.api_url, market, quantity, rate))?;
         self.check_return_single_response(sell_limit)
     }
 
+    /// Cancels an order for the user given by the api_key and api_secret.
+    ///
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use bittrex_api::api::BittrexAPI;
+    ///
+    /// let bittrex_api = BittrexAPI::new("APIKEY", "APISECRET");
+    /// bittrex_api.cancel_order("ORDERID").unwrap();
+    /// ```
     pub fn cancel_order(&self, order_id: &str) -> Result<(), BittrexError> {
-        self.call_private_api::<BittrexAPIResult<()>>(&format!("{}/market/cancel?uuid={}", API_URL, order_id))?;
+        self.call_private_api::<BittrexAPIResult<()>>(&format!("{}/market/cancel?uuid={}", self.api_url, order_id))?;
         Ok(())
     }
 
@@ -167,12 +401,12 @@ impl<'a> BittrexAPI<'a> {
     fn call_private_api<T>(&self, url: &str) -> Result<T, BittrexError> where for<'de> T: serde::Deserialize<'de> {
         let url_with_key = format!("{}&apikey={}&nonce={}", url, self.api_key, time::precise_time_ns());
         let hmac = self.sign_call(&url_with_key);
-
+        
         let mut headers = Headers::new();
         headers.set_raw("apisign", self.to_hex_string(hmac.code()));
 
         let client = self.get_client()?;
-        let mut resp = client.get(url)?.headers(headers).send()?;
+        let mut resp = client.get(&url_with_key)?.headers(headers).send()?;
         let result : T = resp.json()?;
         
         Ok(result)
@@ -198,19 +432,29 @@ impl<'a> BittrexAPI<'a> {
         Ok(client_builder.build()?)
     }
 
-    fn check_return_vec_response<T>(&self, bittrex_api_result: BittrexAPIResult<T>) -> Result<Vec<T>, BittrexError> {
+    fn check_return_single_response<T>(&self, bittrex_api_result: BittrexAPIResult<T>) -> Result<T, BittrexError> {
         match bittrex_api_result.success {
-            true => Ok(bittrex_api_result.result),
+            true => Ok(bittrex_api_result.result.unwrap()),
             false => Err(BittrexError { error_type: BittrexErrorType::APIError, message: bittrex_api_result.message })
         }
     }
 
-    fn check_return_single_response<T>(&self, mut bittrex_api_result: BittrexAPIResult<T>) -> Result<T, BittrexError> {
+    fn check_return_vec_response<T>(&self, bittrex_api_result: BittrexAPIVecResult<T>) -> Result<Vec<T>, BittrexError> {
         match bittrex_api_result.success {
-            true => match bittrex_api_result.result.len() {
-                1 => Ok(bittrex_api_result.result.remove(0)),
-                0 => Err(BittrexError { error_type: BittrexErrorType::NoResults, message: "Maybe check your parameters?".to_string() }),
-                _ => Err(BittrexError { error_type: BittrexErrorType::APIError, message: "Multiple results found! Maybe check your parameters?".to_string() })
+            true => Ok(bittrex_api_result.result.unwrap()),
+            false => Err(BittrexError { error_type: BittrexErrorType::APIError, message: bittrex_api_result.message })
+        }
+    }
+
+    fn check_return_single_vec_response<T>(&self, bittrex_api_result: BittrexAPIVecResult<T>) -> Result<T, BittrexError> {
+        match bittrex_api_result.success {
+            true => {
+                let mut result = bittrex_api_result.result.unwrap();
+                match result.len() {
+                    1 => Ok(result.remove(0)),
+                    0 => Err(BittrexError { error_type: BittrexErrorType::NoResults, message: "Maybe check your parameters?".to_string() }),
+                    _ => Err(BittrexError { error_type: BittrexErrorType::APIError, message: "Multiple results found! Maybe check your parameters?".to_string() })
+                }
             },
             false => Err(BittrexError { error_type: BittrexErrorType::APIError, message: bittrex_api_result.message })
         }
@@ -221,51 +465,5 @@ impl<'a> BittrexAPI<'a> {
                                     .map(|b| format!("{:02X}", b))
                                     .collect();
         strs.join("")
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use mockito::mock;
-    use super::BittrexAPI;
-
-    #[test]
-    fn should_get_markets_successfully() {
-        // Arrange
-        let _mock = mock("GET", "/public/getmarkets")
-            .with_status(200)
-            .with_body(r#"{
-                "success" : true,
-                "message" : "",
-                "result" : [{
-                        "MarketCurrency" : "LTC",
-                        "BaseCurrency" : "BTC",
-                        "MarketCurrencyLong" : "Litecoin",
-                        "BaseCurrencyLong" : "Bitcoin",
-                        "MinTradeSize" : 0.01000000,
-                        "MarketName" : "BTC-LTC",
-                        "IsActive" : true,
-                        "Created" : "2014-02-13T00:00:00"
-                    }, {
-                        "MarketCurrency" : "DOGE",
-                        "BaseCurrency" : "BTC",
-                        "MarketCurrencyLong" : "Dogecoin",
-                        "BaseCurrencyLong" : "Bitcoin",
-                        "MinTradeSize" : 100.00000000,
-                        "MarketName" : "BTC-DOGE",
-                        "IsActive" : true,
-                        "Created" : "2014-02-13T00:00:00"
-                    }
-                ]
-            }"#)
-            .create();
-        let bittrex_api = BittrexAPI::new("KEY", "SECRET");
-
-        // Act
-        let markets = bittrex_api.get_markets().unwrap();
-
-        // Assert
-        assert_eq!(markets.len(), 2);
-        assert_eq!(markets[0].market_currency, "LTC");
     }
 }

@@ -45,6 +45,30 @@ impl From<serde_json::Error> for BittrexError {
 
 impl From<ReqwestError> for BittrexError {
     fn from(error: ReqwestError) -> Self {
-        BittrexError { error_type: BittrexErrorType::APIError, message: error.description().to_string() }
+        let mut err: Option<BittrexError> = None;
+
+        if error.is_http() {
+            err = match error.url() {
+                Some(url) => Some(BittrexError { error_type: BittrexErrorType::APIError, message: format!("Problem making request to: {}", url) }),
+                None => Some(BittrexError { error_type: BittrexErrorType::APIError, message: "No Url given".to_string() })
+            }
+        }
+        
+        if error.is_serialization() {
+            err = match error.get_ref() {
+                Some(err) => Some(BittrexError { error_type: BittrexErrorType::APIError, message: format!("Problem parsing information {}", err) }),
+                None => Some(BittrexError { error_type: BittrexErrorType::APIError, message: "Problem parsing information (no info given)".to_string() })
+            }          
+        }
+
+        if error.is_redirect() {
+            err = Some(BittrexError { error_type: BittrexErrorType::APIError, message: "Server redirecting too many times or making loop".to_string() });
+        }
+
+        if err.is_none() {
+            err = Some(BittrexError { error_type: BittrexErrorType::APIError, message: "Error undefined!".to_string() });
+        }
+
+        err.unwrap()
     }
 }

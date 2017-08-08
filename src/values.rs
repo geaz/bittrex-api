@@ -1,15 +1,29 @@
 use std::fmt;
 
+#[derive(Debug)]
+pub enum BittrexOrderType {
+    Sell,
+    Buy,
+    Both
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct BittrexAPIResult<T> {
     pub success: bool,
     pub message: String,
-    pub result: Vec<T>
+    pub result: Option<T>
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct BittrexAPIVecResult<T> {
+    pub success: bool,
+    pub message: String,
+    pub result: Option<Vec<T>>
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct BittrexUuid {
-    #[serde(rename="Uuid")]
+    #[serde(rename="uuid")]
     pub uuid: String
 }
 
@@ -71,6 +85,10 @@ pub struct BittrexMarketSummary {
     pub low: f32,
     #[serde(rename="Volume")]
     pub volume: f64,
+    #[serde(rename="Last")]
+    pub last: f64,
+    #[serde(rename="BaseVolume")]
+    pub base_volume: f64,
     #[serde(rename="TimeStamp")]
     pub time_stamp: String,
     #[serde(rename="Bid")]
@@ -92,18 +110,18 @@ pub struct BittrexMarketSummary {
 #[derive(Serialize, Deserialize)]
 pub struct BittrexTicker {
     #[serde(rename="Ask")]
-    pub bid: f32,
-    #[serde(rename="Bid")]
     pub ask: f32,
+    #[serde(rename="Bid")]
+    pub bid: f32,
     #[serde(rename="Last")]
     pub last: f32
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct BittrexPublicOrderBook {
-    #[serde(rename="Buy")]
+    #[serde(rename="buy")]
     pub buy: Vec<BittrexPublicOrder>,
-    #[serde(rename="Sell")]
+    #[serde(rename="sell")]
     pub sell: Vec<BittrexPublicOrder>
 }
 
@@ -267,7 +285,7 @@ pub struct BittrexTransaction {
     pub opened: String,
     #[serde(rename="Authorized")]
     pub authorized: bool,
-    #[serde(rename="pending_payment")]
+    #[serde(rename="PendingPayment")]
     pub pending_payment: bool,
     #[serde(rename="TxCost")]
     pub tx_cost: f32,
@@ -295,6 +313,12 @@ pub struct BittrexBalance {
     pub requested: bool,
     #[serde(rename="Uuid")]
     pub uuid: Option<String>
+}
+
+impl fmt::Display for BittrexOrderType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 impl fmt::Display for BittrexUuid {

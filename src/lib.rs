@@ -1,6 +1,3 @@
-#[cfg(test)]
-extern crate mockito;
-
 extern crate time;
 extern crate hmac;
 extern crate sha2;
