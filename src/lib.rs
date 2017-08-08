@@ -12,4 +12,6 @@ extern crate serde_json;
 
 pub mod error;
 pub mod values;
-pub mod api;
+
+mod client;
+pub use client::BittrexClient;

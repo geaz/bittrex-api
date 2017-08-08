@@ -7,14 +7,14 @@ use serde_json;
 #[derive(Debug)]
 pub struct BittrexError {
     pub error_type: BittrexErrorType,
-    pub message: String
+    pub message: String,
 }
 
 #[derive(Debug)]
 pub enum BittrexErrorType {
     APIError,
     JsonError,
-    NoResults
+    NoResults,
 }
 
 impl StdError for BittrexError {
@@ -22,7 +22,7 @@ impl StdError for BittrexError {
         match self.error_type {
             BittrexErrorType::APIError => "Error while calling Bittrex API",
             BittrexErrorType::JsonError => "Error while converting response to Json Value",
-            BittrexErrorType::NoResults => "No results found"
+            BittrexErrorType::NoResults => "No results found",
         }
     }
 }
@@ -32,14 +32,17 @@ impl fmt::Display for BittrexError {
         match self.error_type {
             BittrexErrorType::APIError => write!(f, "{}: {}", self.description(), self.message),
             BittrexErrorType::JsonError => write!(f, "{}: {}", self.description(), self.message),
-            BittrexErrorType::NoResults => write!(f, "{} ({})!", self.description(), self.message)
+            BittrexErrorType::NoResults => write!(f, "{} ({})!", self.description(), self.message),
         }
     }
 }
 
 impl From<serde_json::Error> for BittrexError {
     fn from(error: serde_json::Error) -> Self {
-        BittrexError { error_type: BittrexErrorType::JsonError, message: error.description().to_string() }
+        BittrexError {
+            error_type: BittrexErrorType::JsonError,
+            message: error.description().to_string(),
+        }
     }
 }
 
@@ -49,24 +52,42 @@ impl From<ReqwestError> for BittrexError {
 
         if error.is_http() {
             err = match error.url() {
-                Some(url) => Some(BittrexError { error_type: BittrexErrorType::APIError, message: format!("Problem making request to: {}", url) }),
-                None => Some(BittrexError { error_type: BittrexErrorType::APIError, message: "No Url given".to_string() })
+                Some(url) => Some(BittrexError {
+                    error_type: BittrexErrorType::APIError,
+                    message: format!("Problem making request to: {}", url),
+                }),
+                None => Some(BittrexError {
+                    error_type: BittrexErrorType::APIError,
+                    message: "No Url given".to_string(),
+                }),
             }
         }
-        
+
         if error.is_serialization() {
             err = match error.get_ref() {
-                Some(err) => Some(BittrexError { error_type: BittrexErrorType::APIError, message: format!("Problem parsing information {}", err) }),
-                None => Some(BittrexError { error_type: BittrexErrorType::APIError, message: "Problem parsing information (no info given)".to_string() })
-            }          
+                Some(err) => Some(BittrexError {
+                    error_type: BittrexErrorType::APIError,
+                    message: format!("Problem parsing information {}", err),
+                }),
+                None => Some(BittrexError {
+                    error_type: BittrexErrorType::APIError,
+                    message: "Problem parsing information (no info given)".to_string(),
+                }),
+            }
         }
 
         if error.is_redirect() {
-            err = Some(BittrexError { error_type: BittrexErrorType::APIError, message: "Server redirecting too many times or making loop".to_string() });
+            err = Some(BittrexError {
+                error_type: BittrexErrorType::APIError,
+                message: "Server redirecting too many times or making loop".to_string(),
+            });
         }
 
         if err.is_none() {
-            err = Some(BittrexError { error_type: BittrexErrorType::APIError, message: "Error undefined!".to_string() });
+            err = Some(BittrexError {
+                error_type: BittrexErrorType::APIError,
+                message: "Error undefined!".to_string(),
+            });
         }
 
         err.unwrap()
