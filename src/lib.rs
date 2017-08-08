@@ -10,7 +10,7 @@
 //!
 //! use bittrex_api::BittrexClient;
 //! # fn main() {
-//! let bittrex_client = BittrexClient::new("KEY", "SECRET"); // Initialize the Bittrex Client with your API Key and Secret
+//! let bittrex_client = BittrexClient::new("KEY".to_string(), "SECRET".to_string()); // Initialize the Bittrex Client with your API Key and Secret
 //! let markets = bittrex_client.get_markets().unwrap(); //Get all available markets of Bittrex
 //! # }
 //! ```

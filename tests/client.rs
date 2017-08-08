@@ -35,7 +35,7 @@ fn should_get_markets_successfully() {
             ]
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let markets = bittrex_client.get_markets().unwrap();
@@ -73,7 +73,7 @@ fn should_get_currencies_successfully() {
             ]
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let currencies = bittrex_client.get_currencies().unwrap();
@@ -99,7 +99,7 @@ fn should_get_valid_ticker_successfully() {
             }
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let ticker = bittrex_client.get_ticker("BTC-LTC").unwrap();
@@ -118,7 +118,7 @@ fn should_handle_invalid_ticker_successfully() {
         .with_status(200)
         .with_body(r#"{"success":false,"message":"INVALID_MARKET","result":null}"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     bittrex_client.get_ticker("BT-LT").unwrap();
@@ -166,7 +166,7 @@ fn should_get_market_summaries_successfully() {
             ]
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let summaries = bittrex_client.get_market_summaries().unwrap();
@@ -204,7 +204,7 @@ fn should_get_market_summary_successfully() {
             ]
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let summary = bittrex_client.get_market_summary("btc-ltc").unwrap();
@@ -244,7 +244,7 @@ fn should_get_order_book_successfully() {
             }
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let summary = bittrex_client.get_order_book("BTC-LTC", BittrexOrderType::Both).unwrap();
@@ -299,7 +299,7 @@ fn should_get_market_history_successfully() {
             ]
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let history = bittrex_client.get_market_history("BTC-DOGE").unwrap();
@@ -322,7 +322,7 @@ fn should_buy_limit_successfully() {
                 }
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let buy_limit = bittrex_client.buy_limit("BTC-LTC", 1.2, 1.3).unwrap();
@@ -344,7 +344,7 @@ fn should_sell_limit_successfully() {
                 }
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let sell_limit = bittrex_client.sell_limit("BTC-LTC", 1.2, 1.3).unwrap();
@@ -364,7 +364,7 @@ fn should_cancel_order_successfully() {
             "result" : null
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     bittrex_client.cancel_order("e606d53c-8d70-11e3-94b5-425861b86ab6").unwrap();
@@ -418,7 +418,7 @@ fn should_get_open_orders_successfully() {
             ]
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let open_orders = bittrex_client.get_open_orders().unwrap();
@@ -458,7 +458,7 @@ fn should_get_open_orders_by_market_successfully() {
             ]
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let open_orders = bittrex_client.get_open_orders_by_market("BTC-LTC").unwrap();
@@ -496,7 +496,7 @@ fn should_get_balances_successfully() {
             ]
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let balances = bittrex_client.get_balances().unwrap();
@@ -525,7 +525,7 @@ fn should_get_balance_successfully() {
             }
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let balance = bittrex_client.get_balance("BTC").unwrap();
@@ -548,7 +548,7 @@ fn should_get_deposit_address_successfully() {
             }
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let deposit_address = bittrex_client.get_deposit_address("VTC").unwrap();
@@ -571,7 +571,7 @@ fn should_withdraw_successfully() {
                 }
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let withdraw = bittrex_client.withdraw("BTC", 1.2, "ADRESS", "").unwrap();
@@ -615,7 +615,7 @@ fn should_get_order_successfully() {
             }
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let order = bittrex_client.get_order("ORDERID").unwrap();
@@ -666,7 +666,7 @@ fn should_get_order_history_successfully() {
             ]
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let order_history = bittrex_client.get_order_history().unwrap();
@@ -703,7 +703,7 @@ fn should_get_order_history_by_market_successfully() {
             ]
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let order_history = bittrex_client.get_order_history_by_market("BTC-LTC").unwrap();
@@ -749,7 +749,7 @@ fn should_get_withdrawal_history_successfully() {
             ]
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let withdrawal_history = bittrex_client.get_withdrawal_history().unwrap();
@@ -783,7 +783,7 @@ fn should_get_withdrawal_history_by_currency_successfully() {
             ]
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let withdrawal_history = bittrex_client.get_withdrawal_history_by_currency("BTC").unwrap();
@@ -829,7 +829,7 @@ fn should_get_deposit_history_successfully() {
             ]
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let deposit_history = bittrex_client.get_deposit_history().unwrap();
@@ -863,7 +863,7 @@ fn should_get_deposit_history_by_currency_successfully() {
             ]
         }"#)
         .create();
-    let bittrex_client = BittrexClient::new_override_api_url("KEY", "SECRET", mockito::SERVER_URL);
+    let bittrex_client = BittrexClient::new_override_api_url("KEY".to_string(), "SECRET".to_string(), mockito::SERVER_URL.to_string());
 
     // Act
     let deposit_history = bittrex_client.get_deposit_history_by_currency("BTC").unwrap();

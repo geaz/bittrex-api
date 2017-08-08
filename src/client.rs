@@ -10,37 +10,27 @@ use reqwest::header::Headers;
 use error::{ BittrexError, BittrexErrorType };
 use values::*;
 
-pub struct BittrexClient<'a> {
-    api_url: &'a str,
-    api_key: &'a str,
-    api_secret: &'a str,
-    http_proxy: Option<&'a str>,
-    https_proxy: Option<&'a str>
+const API_URL: &str = "https://bittrex.com/api/v1.1";
+
+pub struct BittrexClient {
+    api_url: String,
+    api_key: String,
+    api_secret: String,
+    http_proxy: Option<String>,
+    https_proxy: Option<String>
 }
 
-impl<'a> Default for BittrexClient<'a> {
-    fn default() -> BittrexClient<'a> {
-        BittrexClient {
-            api_url: "https://bittrex.com/api/v1.1",
-            api_key: "",
-            api_secret: "",
-            http_proxy: None,
-            https_proxy: None
-        }
-    }
-}
-
-impl<'a> BittrexClient<'a> {
-    pub fn new(api_key: &'a str, api_secret: &'a str) -> Self {
-        BittrexClient { api_key: api_key, api_secret: api_secret, ..Default::default() }
+impl BittrexClient {
+    pub fn new(api_key: String, api_secret: String) -> Self {
+        BittrexClient { api_url: API_URL.to_string(), api_key: api_key, api_secret: api_secret, http_proxy: None, https_proxy: None }
     }
 
-    pub fn new_override_api_url(api_key: &'a str, api_secret: &'a str, api_url: &'a str) -> Self {
-        BittrexClient { api_url: api_url, api_key: api_key, api_secret: api_secret, ..Default::default() }
+    pub fn new_override_api_url(api_key: String, api_secret: String, api_url: String) -> Self {
+        BittrexClient { api_url: api_url, api_key: api_key, api_secret: api_secret, http_proxy: None, https_proxy: None }
     }
 
-    pub fn new_with_proxy(api_key: &'a str, api_secret: &'a str, http_proxy: Option<&'a str>, https_proxy: Option<&'a str>) -> Self {
-        BittrexClient { api_key: api_key, api_secret: api_secret, http_proxy: http_proxy, https_proxy: https_proxy, ..Default::default() }
+    pub fn new_with_proxy(api_key: String, api_secret: String, http_proxy: Option<String>, https_proxy: Option<String>) -> Self {
+        BittrexClient { api_url: API_URL.to_string(), api_key: api_key, api_secret: api_secret, http_proxy: http_proxy, https_proxy: https_proxy }
     }
 
     /// Returns all available market data
@@ -50,7 +40,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let markets = bittrex_client.get_markets().unwrap();
     /// ```
     pub fn get_markets(&self) -> Result<Vec<BittrexMarket>, BittrexError> {
@@ -66,7 +56,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let currencies = bittrex_client.get_currencies().unwrap();
     /// ```
     pub fn get_currencies(&self) -> Result<Vec<BittrexCurrency>, BittrexError> {
@@ -81,7 +71,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let ticker = bittrex_client.get_ticker("BTC-LTC").unwrap();
     /// ```
     pub fn get_ticker(&self, market: &str) -> Result<BittrexTicker, BittrexError> {
@@ -96,7 +86,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let summaries = bittrex_client.get_market_summaries().unwrap();
     /// ```
     pub fn get_market_summaries(&self) -> Result<Vec<BittrexMarketSummary>, BittrexError> {
@@ -111,7 +101,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let summary = bittrex_client.get_market_summary("BTC-LTC").unwrap();
     /// ```
     pub fn get_market_summary(&self, market: &str) -> Result<BittrexMarketSummary, BittrexError> {
@@ -127,7 +117,7 @@ impl<'a> BittrexClient<'a> {
     /// use bittrex_api::BittrexClient;
     /// use bittrex_api::values::BittrexOrderType;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let order_book = bittrex_client.get_order_book("BTC-LTC", BittrexOrderType::Both).unwrap();
     /// ```
     pub fn get_order_book(&self, market: &str, book_type: BittrexOrderType) -> Result<BittrexPublicOrderBook, BittrexError> {
@@ -142,7 +132,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let market_history = bittrex_client.get_market_history("BTC-LTC").unwrap();
     /// ```
     pub fn get_market_history(&self, market: &str) -> Result<Vec<BittrexTrade>, BittrexError> {
@@ -157,7 +147,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let open_orders = bittrex_client.get_open_orders().unwrap();
     /// ```
     pub fn get_open_orders(&self) -> Result<Vec<BittrexOpenOrder>, BittrexError> {
@@ -172,7 +162,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let open_orders = bittrex_client.get_open_orders_by_market("BTC-LTC").unwrap();
     /// ```
     pub fn get_open_orders_by_market(&self, market: &str) -> Result<Vec<BittrexOpenOrder>, BittrexError> {
@@ -187,7 +177,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let order = bittrex_client.get_order("ORDERID").unwrap();
     /// ```
     pub fn get_order(&self, order_id: &str) -> Result<BittrexOrder, BittrexError> {
@@ -202,7 +192,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let order_history = bittrex_client.get_order_history().unwrap();
     /// ```
     pub fn get_order_history(&self) -> Result<Vec<BittrexHistoryOrder>, BittrexError> {
@@ -217,7 +207,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let order_history = bittrex_client.get_order_history_by_market("BTC-LTC").unwrap();
     /// ```
     pub fn get_order_history_by_market(&self, market: &str) -> Result<Vec<BittrexHistoryOrder>, BittrexError> {
@@ -232,7 +222,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let withdrawal_history = bittrex_client.get_withdrawal_history().unwrap();
     /// ```
     pub fn get_withdrawal_history(&self) -> Result<Vec<BittrexTransaction>, BittrexError> {
@@ -247,7 +237,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let withdrawal_history = bittrex_client.get_withdrawal_history_by_currency("BTC-LTC").unwrap();
     /// ```
     pub fn get_withdrawal_history_by_currency(&self, currency: &str) -> Result<Vec<BittrexTransaction>, BittrexError> {
@@ -262,7 +252,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let deposit_history = bittrex_client.get_deposit_history().unwrap();
     /// ```
     pub fn get_deposit_history(&self) -> Result<Vec<BittrexTransaction>, BittrexError> {
@@ -277,7 +267,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let deposit_history = bittrex_client.get_deposit_history_by_currency("BTC").unwrap();
     /// ```
     pub fn get_deposit_history_by_currency(&self, currency: &str) -> Result<Vec<BittrexTransaction>, BittrexError> {
@@ -292,7 +282,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let balances = bittrex_client.get_balances().unwrap();
     /// ```
     pub fn get_balances(&self) -> Result<Vec<BittrexBalance>, BittrexError> {
@@ -307,7 +297,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let balance = bittrex_client.get_balance("BTC").unwrap();
     /// ```
     pub fn get_balance(&self, currency: &str) -> Result<BittrexBalance, BittrexError> {
@@ -322,7 +312,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let deposit_history = bittrex_client.get_deposit_address("BTC").unwrap();
     /// ```
     pub fn get_deposit_address(&self, currency: &str) -> Result<BittrexAddress, BittrexError> {
@@ -337,7 +327,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let withdraw_uuid = bittrex_client.withdraw("BTC", 1.5, "BITCOINADDRESS", "").unwrap();
     /// ```
     pub fn withdraw(&self, currency: &str, quantity: f64, address: &str, payment_id: &str) -> Result<BittrexUuid, BittrexError> {
@@ -352,7 +342,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let buy_uuid = bittrex_client.buy_limit("BTC-LTC", 1.5, 0.00023).unwrap();
     /// ```
     pub fn buy_limit(&self, market: &str, quantity: f64, rate: f64) -> Result<BittrexUuid, BittrexError> {
@@ -367,7 +357,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// let sell_uuid = bittrex_client.sell_limit("BTC-LTC", 1.5, 0.00023).unwrap();
     /// ```
     pub fn sell_limit(&self, market: &str, quantity: f64, rate: f64) -> Result<BittrexUuid, BittrexError> {
@@ -382,7 +372,7 @@ impl<'a> BittrexClient<'a> {
     /// ```rust,no_run
     /// use bittrex_api::BittrexClient;
     ///
-    /// let bittrex_client = BittrexClient::new("APIKEY", "APISECRET");
+    /// let bittrex_client = BittrexClient::new("APIKEY".to_string(), "APISECRET".to_string());
     /// bittrex_client.cancel_order("ORDERID").unwrap();
     /// ```
     pub fn cancel_order(&self, order_id: &str) -> Result<(), BittrexError> {
@@ -422,11 +412,14 @@ impl<'a> BittrexClient<'a> {
     fn get_client(&self) -> Result<Client, BittrexError> {
         let mut client_builder = Client::builder()?;
 
-        if self.http_proxy.is_some() {
-            client_builder.proxy(Proxy::http(self.http_proxy.unwrap())?);
+        match self.http_proxy {
+            Some(ref proxy) => { client_builder.proxy(Proxy::http(proxy)?); () }
+            _ => ()
         }
-        if self.https_proxy.is_some() {
-            client_builder.proxy(Proxy::https(self.https_proxy.unwrap())?);
+
+        match self.https_proxy {
+            Some(ref proxy) => { client_builder.proxy(Proxy::https(proxy)?); () }
+            _ => ()
         }
         
         Ok(client_builder.build()?)
