@@ -9,9 +9,10 @@
 //! extern crate bittrex_api;
 //!
 //! use bittrex_api::BittrexClient;
-//!
-//! let bittrex_client = BittrexClient::new("KEY", "SECRET", mockito::SERVER_URL); // Initialize the Bittrex Client with your API Key and Secret
+//! # fn main() {
+//! let bittrex_client = BittrexClient::new("KEY", "SECRET"); // Initialize the Bittrex Client with your API Key and Secret
 //! let markets = bittrex_client.get_markets().unwrap(); //Get all available markets of Bittrex
+//! # }
 //! ```
 extern crate time;
 extern crate hmac;
