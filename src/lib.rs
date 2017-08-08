@@ -1,3 +1,18 @@
+//! # bittrex-api
+//!
+//! **bittrex-api** provides a wrapper for the [Bittrex API](https://bittrex.com/home/api).
+//! This crate makes it easy to consume the **Bittrex API** in Rust.
+//! 
+//! ##Example
+//! 
+//! ```no_run
+//! extern crate bittrex_api;
+//!
+//! use bittrex_api::BittrexClient;
+//!
+//! let bittrex_client = BittrexClient::new("KEY", "SECRET", mockito::SERVER_URL); // Initialize the Bittrex Client with your API Key and Secret
+//! let markets = bittrex_client.get_markets().unwrap(); //Get all available markets of Bittrex
+//! ```
 extern crate time;
 extern crate hmac;
 extern crate sha2;
