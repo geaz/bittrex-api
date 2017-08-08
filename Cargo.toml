@@ -2,6 +2,12 @@
 name = "bittrex-api"
 version = "0.1.0"
 authors = ["Christian Gerrit Gazic <christian.gazic@dvbbank.com>"]
+license = "MIT"
+homepage = "https://github.com/geaz/bittrex-api"
+repository = "https://github.com/geaz/bittrex-api/"
+description = "A wrapper for the bittrex api"
+keywords = [ "Bittrex", "API" ]
+readme = "README.md"
 
 [dependencies]
 hmac = "0.4.2"
