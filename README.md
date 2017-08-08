@@ -4,10 +4,10 @@
 
 # bittrex-api
 
-**bittrex-api** provides a wrapper for the [Bittrex API](https://bittrex.com/home/api).
+**bittrex-api** provides a wrapper for the [Bittrex API](https://bittrex.com/home/api).  
 This crate makes it easy to consume the **Bittrex API** in Rust.
 
-##Example
+## Example
 
 ```
 extern crate bittrex_api;
