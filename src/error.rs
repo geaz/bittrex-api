@@ -90,6 +90,6 @@ impl From<ReqwestError> for BittrexError {
             });
         }
 
-        err.unwrap()
+        err.expect("Error should exist!")
     }
 }
