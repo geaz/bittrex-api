@@ -47,7 +47,6 @@ impl BittrexClient {
     /// let markets = bittrex_client.get_markets().unwrap();
     /// ```
     pub fn get_markets(&self) -> Result<Vec<BittrexMarket>> {
-        println!("{}", self.api_url);
         let markets = self.call_public_api::<BittrexAPIVecResult<BittrexMarket>>(&format!("{}/public/getmarkets", self.api_url))?;
         self.check_return_vec_response(markets)
     }
