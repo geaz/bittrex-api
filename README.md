@@ -18,4 +18,4 @@ let bittrex_client = BittrexClient::new("KEY".to_string(), "SECRET".to_string())
 let markets = bittrex_client.get_markets().unwrap(); //Get all available markets of Bittrex
 ```
 
-See the [Documentation](https://docs.rs/bittrex-api/0.2.0/bittrex_api/) for more information about the various wrapper functions.
+See the [Documentation](https://docs.rs/bittrex-api) for more information about the various wrapper functions.
