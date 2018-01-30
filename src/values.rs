@@ -308,11 +308,7 @@ pub struct BittrexBalance {
     #[serde(rename = "Pending")]
     pub pending: f32,
     #[serde(rename = "CryptoAddress")]
-    pub crypto_address: String,
-    #[serde(rename = "Requested")]
-    pub requested: bool,
-    #[serde(rename = "Uuid")]
-    pub uuid: Option<String>,
+    pub crypto_address: Option<String>,
 }
 
 impl fmt::Display for BittrexOrderType {
