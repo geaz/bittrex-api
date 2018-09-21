@@ -1,7 +1,7 @@
 [package]
 name = "bittrex-api"
 version = "0.3.2"
-authors = ["Christian Gerrit Gazic <christian.gazic@dvbbank.com>"]
+authors = ["Christian Gerrit Gazic"]
 license = "MIT"
 repository = "https://github.com/geaz/bittrex-api/"
 description = "A wrapper for the bittrex api"
